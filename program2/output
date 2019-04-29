@@ -1,0 +1,77 @@
+./prog2 3 3 4
+MAIN: Started P0
+MAIN: Started P1
+MAIN: Started P2
+MAIN: Started C0
+MAIN: Started C1
+MAIN: Started C2
+MAIN: Started C3
+C3: Consuming 4 values
+C3 blocked due to empty buffer
+C2: Consuming 4 values
+C2 blocked due to empty buffer
+C1: Consuming 4 values
+C1 blocked due to empty buffer
+C0: Consuming 4 values
+C0 blocked due to empty buffer
+P2: Producing 6 values
+P2: Writing 3 to position 0
+P2: Writing 3 to position 1
+P2: Writing 6 to position 2
+P2: Blocked due to full buffer
+P2: Done waiting on full buffer
+P2: Writing 10 to position 0
+P2: Writing 7 to position 1
+P2: Writing 3 to position 2
+P2: Exiting
+C1: Done waiting for empty buffer
+C1: Reading 10 from postion 0
+C1: Reading 7 from postion 1
+C1: Reading 3 from postion 2
+C1: Reading 10 from postion 0
+C1: Exiting
+C0: Done waiting for empty buffer
+C0: Reading 7 from postion 1
+C0: Reading 3 from postion 2
+C0 blocked due to empty buffer
+C0: Done waiting for empty buffer
+C0: Reading 10 from postion 0
+C0: Reading 7 from postion 1
+C0: Exiting
+C3: Done waiting for empty buffer
+C3: Reading 3 from postion 2
+C3: Reading 10 from postion 0
+C3: Reading 7 from postion 1
+C3: Reading 3 from postion 2
+C3: Exiting
+C2: Done waiting for empty buffer
+C2: Reading 10 from postion 0
+C2: Reading 7 from postion 1
+C2: Reading 3 from postion 2
+C2: Reading 10 from postion 0
+C2: Exiting
+P1: Producing 6 values
+P1: Writing 8 to position 0
+P1: Writing 5 to position 1
+P1: Writing 9 to position 2
+P1: Writing 0 to position 0
+P1: Writing 0 to position 1
+P1: Writing 6 to position 2
+P1: Exiting
+P0: Producing 6 values
+P0: Writing 5 to position 0
+P0: Writing 8 to position 1
+P0: Writing 1 to position 2
+P0: Writing 1 to position 0
+P0: Writing 9 to position 1
+P0: Writing 3 to position 2
+P0: Exiting
+MAIN: P0 joined
+MAIN: P1 joined
+MAIN: P2 joined
+MAIN: C0 joined
+MAIN: C1 joined
+MAIN: C2 joined
+MAIN: C3 joined
+MAIN: PROGRAM COMPLETE
+
