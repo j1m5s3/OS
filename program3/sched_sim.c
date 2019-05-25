@@ -72,10 +72,10 @@ void destroy_SUMMARY(SUMMARY *algorithm_summary){
 }
 
 void enQ(QUEUE *queue, PROC_INFO *proc){
-	printf("ENQ: %d\n",__LINE__);
+	
 
 	NODE *NEWnode = (NODE *)malloc(sizeof(NODE));
-	printf("ENQ: %d\n", __LINE__);
+
 	NEWnode -> info = proc;
 	NEWnode -> next = NULL;
 
@@ -88,6 +88,7 @@ void enQ(QUEUE *queue, PROC_INFO *proc){
 		queue -> tail -> next = NEWnode;
 		queue -> tail = NEWnode;
 	}
+	printf("ENQ: %d\n", __LINE__);
 }
 
 void burst_enQ(QUEUE *queue, PROC_INFO *proc){//enqueue process depending on burst
@@ -210,19 +211,21 @@ int deQ(QUEUE *queue){
 	int id;
 	NODE *TEMPnode;
 
-	printf("deQ: %d\n",__LINE__);
 	if(Qempty(queue)){
 		return -1;
 	}
-	printf("deQ: %d\n",__LINE__);
+	
 	TEMPnode = queue -> head;
 	id = TEMPnode -> info -> id;
-	printf("deQ: %d\n",__LINE__);
 
 	queue -> head = queue -> head -> next;
 
 	free(TEMPnode);
-	printf("deQ: %d\n",__LINE__);
+
+	if(queue -> head == NULL){
+		queue -> tail = NULL;
+	}
+	printf("deQ: %d\n", __LINE__);
 
 	return id;
 }
@@ -232,12 +235,10 @@ int checkQ(QUEUE *queue){
 }
 
 int Qempty(QUEUE *queue){
-	printf("Qempty: %d\n", __LINE__);
 	return queue -> head == NULL && queue -> tail == NULL;
 }
 
 void printQ(FILE *output_file, QUEUE *queue){
-	printf("printQ: %d\n",__LINE__);
 
 	NODE CURRENTnode;
 
@@ -247,19 +248,17 @@ void printQ(FILE *output_file, QUEUE *queue){
 	}
 
 	CURRENTnode.info = queue -> head -> info;
-	printf("printQ: %d\n",__LINE__);
-
 	CURRENTnode.next = queue -> head -> next;
-	printf("printQ: %d\n",__LINE__);
 
 	while(CURRENTnode.next != NULL){
-		printf("printQ: %d\n",__LINE__);
 
 		fprintf(output_file, "%d-", CURRENTnode.info -> id);
+		printf("printQ: %d\n", __LINE__);
 		CURRENTnode.info = CURRENTnode.next -> info;
 		CURRENTnode.next = CURRENTnode.next -> next;
 	}
 	fprintf(output_file, "%d\n", queue -> tail -> info -> id);
+	printf("printQ: %d\n",__LINE__);
 }
 
 void add_LLnode(LL *linked_l, int id){
@@ -282,7 +281,7 @@ void add_LLnode(LL *linked_l, int id){
 
 void printLL(FILE *output_file,LL *linked_l){
 
-	LL_NODE *CURRENTnode;
+	LL_NODE CURRENTnode;
 
 	if(LLempty(linked_l)){
 
@@ -290,14 +289,14 @@ void printLL(FILE *output_file,LL *linked_l){
 		return;
 	}
 
-	CURRENTnode -> proc_id = linked_l -> head -> proc_id;
-	CURRENTnode -> next = linked_l -> head -> next;
+	CURRENTnode.proc_id = linked_l -> head -> proc_id;
+	CURRENTnode.next = linked_l -> head -> next;
 
-	while(CURRENTnode -> next != NULL){
+	while(CURRENTnode.next != NULL){
 		
-		fprintf(output_file, "%d-", CURRENTnode -> proc_id);
-		CURRENTnode -> proc_id = CURRENTnode -> next -> proc_id;
-		CURRENTnode -> next = CURRENTnode -> next -> next;
+		fprintf(output_file, "%d-", CURRENTnode.proc_id);
+		CURRENTnode.proc_id = CURRENTnode.next -> proc_id;
+		CURRENTnode.next = CURRENTnode.next -> next;
 	}
 	fprintf(output_file, "%d\n", linked_l -> tail -> proc_id);
 }
@@ -312,10 +311,10 @@ SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int
 	int t = 0;
 	int complete = 0;
 	int curr_proc = -1;
-	printf("SIM: %d\n",__LINE__);
+	printf("SIM %d  %d\n", algorithm, __LINE__);
 	SUMMARY *algorithm_summary = create_SUMMARY();
 	QUEUE *queue = create_Q();
-	printf("SIM: %d\n",__LINE__);
+	
 	if(algorithm == 0)
 		fprintf(output_file, "***** FCFS Scheduling *****\n");
 	if(algorithm == 1)
@@ -326,35 +325,36 @@ SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int
 		fprintf(output_file, "***** STCF Scheduling *****\n");
 	if(algorithm == 4)
 		fprintf(output_file, "***** STCF Scheduling *****\n");
-	printf("SIM: %d\n",__LINE__);
 
 	while(complete < num_of_procs){
+		printf("Complete: %d; t = %d; Active Proc: %d\n", complete, t, curr_proc);
 		for(i = 0; i < num_of_procs; i++){
+			printf("ID: %d; Arr_t: %d; remain_t: %d\n", proc[i].id,proc[i].arrival_t,proc[i].remaining_t);
 			if(t >= proc[i].arrival_t){
 				if(proc[i].status == 'N' || proc[i].status == 'W'){
 					if(algorithm == 0){//FCFS
 						enQ(queue, &proc[i]);
-						printf("SCHED: %d\n",__LINE__);
+						printf("FCFS: %d\n",__LINE__);
 						proc[i].status = 'R';
 					}
 					if(algorithm == 1){//SJF
 						burst_enQ(queue, &proc[i]);
-						printf("SCHED: %d\n",__LINE__);
+						printf("SJF: %d\n",__LINE__);
 						proc[i].status = 'R';
 					}
 					if(algorithm == 2){//STCF
 						remainingBURST_enQ(queue, &proc[i]);
-					  	printf("SCHED: %d\n",__LINE__);
+					  	printf("STCF: %d\n",__LINE__);
 						proc[i].status = 'R';
 					}
 					if(algorithm == 3){//RR
 						enQ(queue, &proc[i]);
-						printf("SCHED: %d\n",__LINE__);
+						printf("RR: %d\n",__LINE__);
 						proc[i].status = 'R';
 					}
 					if(algorithm == 4){//NPP
 						priority_enQ(queue, &proc[i]);
-						printf("SCHED: %d\n",__LINE__);
+						printf("NPP: %d\n",__LINE__);
 						proc[i].status = 'R';
 					}
 				}
@@ -369,7 +369,6 @@ SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int
 				printQ(output_file, queue);
 				fprintf(output_file,"\n");
 			}
-			printf("SIM: %d\n",__LINE__);
 
 			curr_proc = deQ(queue);
 			proc[curr_proc].status = 'A';//First process is active
@@ -399,13 +398,11 @@ SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int
 				printQ(output_file, queue);
 				fprintf(output_file,"\n");
 			}
-			printf("SIM: %d\n",__LINE__);
 
 			proc[curr_proc].status = 'C';
 			proc[curr_proc].end_t = t;
 			complete++;
 			curr_proc = deQ(queue);//segfault appears to heappen here
-			printf("SIM: %d\n", __LINE__);
 			proc[curr_proc].status = 'A';
 
 			if(proc[curr_proc].remaining_t == proc[curr_proc].burst_t){
@@ -477,8 +474,6 @@ SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int
 		}
 		else{
 			if(t % update_interval == 0){
-				if(queue -> head == NULL && queue -> tail != NULL)
-					queue -> head == queue -> tail;
 				fprintf(output_file, "t = %d\n", t);
 				fprintf(output_file, "CPU: Running Process %d ", curr_proc);
 				fprintf(output_file, "(Remaining CPU BURST = %d)\n", proc[curr_proc].remaining_t);
