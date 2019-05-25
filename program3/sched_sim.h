@@ -5,14 +5,14 @@ extern const int QUANTUM;
 
 typedef struct proc_info{
 
-	int id;
-	int burst_t;
-	int priority;
-	int arrival_t;
-	int start_t;
-	int end_t;
-	int last_run;
-	int remaining_t;
+	int id;//process id
+	int burst_t;//process CPU BURST taken from input file
+	int priority;//process prioity# taken from input file
+	int arrival_t;//process arrival time taken from input file
+	int start_t;//track what time t the process starts
+	int end_t;//track what time t the process completes
+	int last_run;//track what time t the process ran
+	int remaining_t;//remaining burst time of the process
 	int tt;//turnaround time
 	int wt;//wait time
 	char status;//New, Ready, Active, Waiting, Completed (N,R,A,W,C)
@@ -47,10 +47,10 @@ typedef struct queue{
 //Algorithm summary struct
 typedef struct summary{
 
-	double avg_wt;
-	double avg_tt;
-	int context_switches;
-	LL *proc_seq;
+	double avg_wt;//average wait time for the process
+	double avg_tt;//average turnaroundtime for the process
+	int context_switches;//count the context switches
+	LL *proc_seq;//access to the linked list which holds sequence in which the processes run
 }SUMMARY;
 
 QUEUE* create_Q();

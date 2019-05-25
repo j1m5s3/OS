@@ -24,17 +24,17 @@ LL* create_LL(){
 
 SUMMARY* create_SUMMARY(){
 
-	SUMMARY *algo_summary = (SUMMARY *)malloc(sizeof(SUMMARY));
+	SUMMARY *algorithm_summary = (SUMMARY *)malloc(sizeof(SUMMARY));
 
-	algo_summary -> avg_wt = 0;
-	algo_summary -> avg_tt = 0;
-	algo_summary -> proc_seq = create_LL();
-	algo_summary -> context_switches = 0;
+	algorithm_summary -> avg_wt = 0;
+	algorithm_summary -> avg_tt = 0;
+	algorithm_summary -> proc_seq = create_LL();
+	algorithm_summary -> context_switches = 0;
 
-	return algo_summary;
+	return algorithm_summary;
 }
 
-void destroy_Q(QUEUE* queue){
+void destroy_Q(QUEUE* queue){//destroy queue after completion of each algorithm
 
 	NODE *current = queue -> head;
 
@@ -49,7 +49,7 @@ void destroy_Q(QUEUE* queue){
 	queue = NULL;
 }
 
-void destroy_LL(LL *linked_l){
+void destroy_LL(LL *linked_l){//destroy linked list
 
 	LL_NODE *current = linked_l -> head;
 
@@ -64,14 +64,14 @@ void destroy_LL(LL *linked_l){
 	linked_l = NULL;
 }
 
-void destroy_SUMMARY(SUMMARY *algorithm_summary){
+void destroy_SUMMARY(SUMMARY *algorithm_summary){//destroy summary after program is finished
 
-	destroy_LL(algorithm_summary -> proc_seq);
+	destroy_LL(algorithm_summary -> proc_seq);//destroy linked list holding process sequence for each algorithm
 	free(algorithm_summary);
 	algorithm_summary = NULL;
 }
 
-void enQ(QUEUE *queue, PROC_INFO *proc){
+void enQ(QUEUE *queue, PROC_INFO *proc){//simple enqueue a process when it has arrived (RR and FCFS)
 	
 
 	NODE *NEWnode = (NODE *)malloc(sizeof(NODE));
@@ -88,7 +88,6 @@ void enQ(QUEUE *queue, PROC_INFO *proc){
 		queue -> tail -> next = NEWnode;
 		queue -> tail = NEWnode;
 	}
-	printf("ENQ: %d\n", __LINE__);
 }
 
 void burst_enQ(QUEUE *queue, PROC_INFO *proc){//enqueue process depending on burst
@@ -114,7 +113,7 @@ void burst_enQ(QUEUE *queue, PROC_INFO *proc){//enqueue process depending on bur
 		queue -> head = NEWnode;
 	}
 	else{
-		while(CURRENTnode -> next != NULL && CURRENTnode -> next -> info -> burst_t < proc -> burst_t){
+		while(CURRENTnode -> next != NULL && CURRENTnode -> next -> info -> burst_t < proc -> burst_t){//determine which process in the queue has least remaing burst and place accordingly
 
 			CURRENTnode = CURRENTnode -> next;
 		}
@@ -128,7 +127,7 @@ void burst_enQ(QUEUE *queue, PROC_INFO *proc){//enqueue process depending on bur
 	}
 }
 
-void remainingBURST_enQ(QUEUE *queue, PROC_INFO *proc){
+void remainingBURST_enQ(QUEUE *queue, PROC_INFO *proc){//enqueue a process based on remaining burst time of the process
 
 	NODE *CURRENTnode;
 	NODE *NEWnode = (NODE *)malloc(sizeof(NODE));
@@ -145,7 +144,7 @@ void remainingBURST_enQ(QUEUE *queue, PROC_INFO *proc){
 
 	CURRENTnode = queue -> head;
 
-	if(queue -> head -> info -> remaining_t > proc -> remaining_t){
+	if(queue -> head -> info -> remaining_t > proc -> remaining_t){//processes position in queue is based on the reamaing burst (remaining_t)
 
 		NEWnode -> next = queue -> head;
 		queue -> head = NEWnode;
@@ -165,7 +164,7 @@ void remainingBURST_enQ(QUEUE *queue, PROC_INFO *proc){
 	}
 }
 
-void priority_enQ(QUEUE *queue, PROC_INFO *proc){
+void priority_enQ(QUEUE *queue, PROC_INFO *proc){//enqueue a process based on the coprresponding priority# of that process
 
 	NODE *CURRENTnode;
 	NODE *NEWnode = (NODE *)malloc(sizeof(NODE));
@@ -188,7 +187,7 @@ void priority_enQ(QUEUE *queue, PROC_INFO *proc){
 		queue -> head = NEWnode;
 	}
 	else{
-		while(CURRENTnode -> next != NULL && CURRENTnode -> next -> info -> priority < proc -> priority){
+		while(CURRENTnode -> next != NULL && CURRENTnode -> next -> info -> priority < proc -> priority){//postition in the queue is based on priority of process
 			
 			CURRENTnode = CURRENTnode -> next;
 		}
@@ -206,10 +205,10 @@ void priority_enQ(QUEUE *queue, PROC_INFO *proc){
 	}
 }
 
-int deQ(QUEUE *queue){
+int deQ(QUEUE *queue){//dequeue a process from the queue when it has become Active
 
 	int id;
-	NODE *TEMPnode;
+	NODE *TEMPnode;//temporary node will hold the current head of the queue
 
 	if(Qempty(queue)){
 		return -1;
@@ -220,25 +219,24 @@ int deQ(QUEUE *queue){
 
 	queue -> head = queue -> head -> next;
 
-	free(TEMPnode);
+	free(TEMPnode);//previous head of the queue removed
 
 	if(queue -> head == NULL){
 		queue -> tail = NULL;
 	}
-	printf("deQ: %d\n", __LINE__);
 
 	return id;
 }
 
-int checkQ(QUEUE *queue){
+int checkQ(QUEUE *queue){//grab the id of the head of the queue (next in)
 	return queue -> head -> info -> id;
 }
 
-int Qempty(QUEUE *queue){
+int Qempty(QUEUE *queue){//check if queue is empty
 	return queue -> head == NULL && queue -> tail == NULL;
 }
 
-void printQ(FILE *output_file, QUEUE *queue){
+void printQ(FILE *output_file, QUEUE *queue){//print the queue to show the processes that have arrived
 
 	NODE CURRENTnode;
 
@@ -250,18 +248,16 @@ void printQ(FILE *output_file, QUEUE *queue){
 	CURRENTnode.info = queue -> head -> info;
 	CURRENTnode.next = queue -> head -> next;
 
-	while(CURRENTnode.next != NULL){
+	while(CURRENTnode.next != NULL){//print the queue 
 
 		fprintf(output_file, "%d-", CURRENTnode.info -> id);
-		printf("printQ: %d\n", __LINE__);
 		CURRENTnode.info = CURRENTnode.next -> info;
 		CURRENTnode.next = CURRENTnode.next -> next;
 	}
-	fprintf(output_file, "%d\n", queue -> tail -> info -> id);
-	printf("printQ: %d\n",__LINE__);
+	fprintf(output_file, "%d\n", queue -> tail -> info -> id);//print the last member of the queue (queue->tail->next = NULL)
 }
 
-void add_LLnode(LL *linked_l, int id){
+void add_LLnode(LL *linked_l, int id){//add a new node to the linked list each time a process becomes Active
 
 	LL_NODE *NEWnode = (LL_NODE *)malloc(sizeof(LL_NODE));
 
@@ -279,7 +275,7 @@ void add_LLnode(LL *linked_l, int id){
 	}
 }
 
-void printLL(FILE *output_file,LL *linked_l){
+void printLL(FILE *output_file,LL *linked_l){//print the linked list to show process sequence
 
 	LL_NODE CURRENTnode;
 
@@ -292,28 +288,40 @@ void printLL(FILE *output_file,LL *linked_l){
 	CURRENTnode.proc_id = linked_l -> head -> proc_id;
 	CURRENTnode.next = linked_l -> head -> next;
 
-	while(CURRENTnode.next != NULL){
+	while(CURRENTnode.next != NULL){//print the process sequence 
 		
 		fprintf(output_file, "%d-", CURRENTnode.proc_id);
 		CURRENTnode.proc_id = CURRENTnode.next -> proc_id;
 		CURRENTnode.next = CURRENTnode.next -> next;
 	}
-	fprintf(output_file, "%d\n", linked_l -> tail -> proc_id);
+	fprintf(output_file, "%d\n", linked_l -> tail -> proc_id);//print the tail id (tail -> next = NULL)
 }
 
-int LLempty(LL *linked_l){
+int LLempty(LL *linked_l){//check if linked list is empty
 	return linked_l -> head == NULL && linked_l -> tail == NULL;
 }
 
-SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int num_of_procs, int algorithm){
+SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int num_of_procs, int algorithm){//Simulation function in which the simulation of each algorithm takes place
 
 	int i;
 	int t = 0;
 	int complete = 0;
 	int curr_proc = -1;
-	printf("SIM %d  %d\n", algorithm, __LINE__);
-	SUMMARY *algorithm_summary = create_SUMMARY();
-	QUEUE *queue = create_Q();
+	
+	SUMMARY *algorithm_summary = create_SUMMARY();//initialize space for each algorithm summary
+	QUEUE *queue = create_Q();//initialze queue upon the start of each algorithm
+
+	if(algorithm > 0){//reset process info for each algorithm after FCFS
+		for(i = 0; i < num_of_procs; i++){
+			proc[i].remaining_t = proc[i].burst_t;
+			proc[i].start_t = -1;
+			proc[i].end_t = -1;
+			proc[i].last_run = -1;
+			proc[i].wt = -1;
+			proc[i].tt = -1;
+			proc[i].status = 'N';
+		}
+	}
 	
 	if(algorithm == 0)
 		fprintf(output_file, "***** FCFS Scheduling *****\n");
@@ -322,45 +330,38 @@ SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int
 	if(algorithm == 2)
 		fprintf(output_file, "***** STCF Scheduling *****\n");
 	if(algorithm == 3)
-		fprintf(output_file, "***** STCF Scheduling *****\n");
+		fprintf(output_file, "***** RR Scheduling *****\n");
 	if(algorithm == 4)
-		fprintf(output_file, "***** STCF Scheduling *****\n");
+		fprintf(output_file, "***** NPP Scheduling *****\n");
 
 	while(complete < num_of_procs){
-		printf("Complete: %d; t = %d; Active Proc: %d\n", complete, t, curr_proc);
 		for(i = 0; i < num_of_procs; i++){
-			printf("ID: %d; Arr_t: %d; remain_t: %d\n", proc[i].id,proc[i].arrival_t,proc[i].remaining_t);
 			if(t >= proc[i].arrival_t){
-				if(proc[i].status == 'N' || proc[i].status == 'W'){
+				if(proc[i].status == 'N' || proc[i].status == 'W'){//processes are enqueued based on the current algorithm
 					if(algorithm == 0){//FCFS
 						enQ(queue, &proc[i]);
-						printf("FCFS: %d\n",__LINE__);
 						proc[i].status = 'R';
 					}
 					if(algorithm == 1){//SJF
 						burst_enQ(queue, &proc[i]);
-						printf("SJF: %d\n",__LINE__);
 						proc[i].status = 'R';
 					}
 					if(algorithm == 2){//STCF
 						remainingBURST_enQ(queue, &proc[i]);
-					  	printf("STCF: %d\n",__LINE__);
 						proc[i].status = 'R';
 					}
 					if(algorithm == 3){//RR
 						enQ(queue, &proc[i]);
-						printf("RR: %d\n",__LINE__);
 						proc[i].status = 'R';
 					}
 					if(algorithm == 4){//NPP
 						priority_enQ(queue, &proc[i]);
-						printf("NPP: %d\n",__LINE__);
 						proc[i].status = 'R';
 					}
 				}
 			}
 		}
-		if(curr_proc == -1 && !Qempty(queue)){
+		if(curr_proc == -1 && !Qempty(queue)){//first process to be loaded for each algorithm
 			if(t % update_interval == 0){
 				fprintf(output_file, "t = %d\n", t);
 				fprintf(output_file, "CPU: Loading Process %d ", checkQ(queue));
@@ -374,13 +375,12 @@ SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int
 			proc[curr_proc].status = 'A';//First process is active
 			proc[curr_proc].start_t = t;
 			proc[curr_proc].last_run = t;
-			proc[curr_proc].remaining_t--;
-			algorithm_summary -> context_switches++;
-			add_LLnode(algorithm_summary -> proc_seq, curr_proc);
-			printf("SIM: %d\n",__LINE__);
+			proc[curr_proc].remaining_t--;//burst time is decremented each cycle
+			algorithm_summary -> context_switches++;//oncrement context switch each time a new process runs
+			add_LLnode(algorithm_summary -> proc_seq, curr_proc);//process will be added to the linked list to show the complete process sequence of the algorithm
 
 		}
-		else if(curr_proc == -1 && Qempty(queue)){
+		else if(curr_proc == -1 && Qempty(queue)){//For the case in which arrival time is not 0 and to make sure queue is working properly
 			if(t % update_interval == 0){
 				fprintf(output_file,"t = %d\n", t);
 				fprintf(output_file, "CPU: Waiting for processes\n");
@@ -389,7 +389,7 @@ SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int
 				fprintf(output_file, "\n");
 			}
 		}
-		else if(proc[curr_proc].remaining_t <= 0 && !Qempty(queue)){
+		else if(proc[curr_proc].remaining_t <= 0 && !Qempty(queue)){//current process is finishing and another process has alredy arrived
 			if(t % update_interval == 0){	
 				fprintf(output_file, "t = %d\n", t);
 				fprintf(output_file, "CPU: Finishing Process %d; Loading Process %d ", curr_proc, checkQ(queue));
@@ -399,10 +399,10 @@ SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int
 				fprintf(output_file,"\n");
 			}
 
-			proc[curr_proc].status = 'C';
+			proc[curr_proc].status = 'C';//indicate complete status
 			proc[curr_proc].end_t = t;
-			complete++;
-			curr_proc = deQ(queue);//segfault appears to heappen here
+			complete++;//increment complete
+			curr_proc = deQ(queue);//dequeue the head of the queue (next process up)
 			proc[curr_proc].status = 'A';
 
 			if(proc[curr_proc].remaining_t == proc[curr_proc].burst_t){
@@ -412,10 +412,8 @@ SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int
 			proc[curr_proc].remaining_t--;
 			algorithm_summary -> context_switches++;
 			add_LLnode(algorithm_summary -> proc_seq, curr_proc);
-			printf("SIM: %d\n",__LINE__);
-
 		}
-		else if(proc[curr_proc].remaining_t <= 0 && Qempty(queue)){
+		else if(proc[curr_proc].remaining_t <= 0 && Qempty(queue)){//When a process finishes
 			if(t % update_interval == 0){
 				fprintf(output_file, "t = %d\n", t);
 				fprintf(output_file, "CPU: Finishing Process %d \n", curr_proc);
@@ -423,12 +421,12 @@ SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int
 				printQ(output_file, queue);
 				fprintf(output_file, "\n");
 			}
-			proc[curr_proc].status = 'C';
+			proc[curr_proc].status = 'C';//given Complete status
 			proc[curr_proc].end_t = t;
-			complete++;
-			curr_proc = -1;
+			complete++;//increment to indicate a process has completed
+			curr_proc = -1;//reset the currrent process index, current process index is determined by the next dequeue
 		}
-		else if(algorithm == 2 && !Qempty(queue) && proc[curr_proc].remaining_t > proc[checkQ(queue)].remaining_t){
+		else if(algorithm == 2 && !Qempty(queue) && proc[curr_proc].remaining_t > proc[checkQ(queue)].remaining_t){//STCF scheduler chooses current process based on remaining burst
 			if(t % update_interval == 0){
 				fprintf(output_file, "t = %d\n", t);
 				fprintf(output_file, "CPU: Preempting Process %d (Remaining CPU BURST = %d; ", curr_proc, proc[curr_proc].remaining_t);
@@ -450,7 +448,7 @@ SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int
 			algorithm_summary -> context_switches++;
 			add_LLnode(algorithm_summary -> proc_seq, curr_proc);
 		}
-		else if(algorithm == 3 && !Qempty(queue) && t - proc[curr_proc].last_run >= QUANTUM){
+		else if(algorithm == 3 && !Qempty(queue) && t - proc[curr_proc].last_run >= QUANTUM){//RR scheduler with QUNTUM = 2 (2s bursts)
 			if(t % update_interval == 0){
 				fprintf(output_file, "t = %d\n", t);
 				fprintf(output_file, "CPU: Preempting Process %d (Remaining CPU BURST = %d); ", curr_proc, proc[curr_proc].remaining_t);
@@ -459,9 +457,9 @@ SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int
 				printQ(output_file, queue);
 				fprintf(output_file, "\n");
 			}
-			proc[curr_proc].status = 'W';
-			curr_proc = deQ(queue);
-			proc[curr_proc].status = 'A';
+			proc[curr_proc].status = 'W';//processes will have wait status until RR returns 
+			curr_proc = deQ(queue);//dequeue process for a burst time of value QUANTUM
+			proc[curr_proc].status = 'A';//process is given Active status  
 
 			if(proc[curr_proc].remaining_t == proc[curr_proc].burst_t){
 				proc[curr_proc].start_t = t;
@@ -470,9 +468,9 @@ SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int
 			proc[curr_proc].last_run = t;
 			proc[curr_proc].remaining_t--;
 			algorithm_summary -> context_switches++;
-			add_LLnode(algorithm_summary -> proc_seq, curr_proc);
+			add_LLnode(algorithm_summary -> proc_seq, curr_proc);//add a node to the linked list after each QUANTUM burst is completed
 		}
-		else{
+		else{//while a process is running the program will enter
 			if(t % update_interval == 0){
 				fprintf(output_file, "t = %d\n", t);
 				fprintf(output_file, "CPU: Running Process %d ", curr_proc);
@@ -481,27 +479,27 @@ SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int
 				printQ(output_file, queue);
 				fprintf(output_file,"\n");
 			}
-			proc[curr_proc].remaining_t--;
+			proc[curr_proc].remaining_t--;//decrement remaining burst time
 		}
 
 		t++;
 	}
 
-	for(i = 0; i < num_of_procs; i++){
+	for(i = 0; i < num_of_procs; i++){//calculation of turnaroundtime, wait time, and their averages
 		proc[i].tt = proc[i].end_t - proc[i].arrival_t;
 		proc[i].wt = proc[i].tt - proc[i].burst_t;
-		algorithm_summary -> avg_tt += proc[i].tt;
-		algorithm_summary -> avg_wt += proc[i].wt;
+		algorithm_summary -> avg_tt += proc[i].tt;//sum of all tt
+		algorithm_summary -> avg_wt += proc[i].wt;//sum of all wt
 	}
 	algorithm_summary -> avg_tt/= num_of_procs;
 	algorithm_summary -> avg_wt /= num_of_procs;
 
-	destroy_Q(queue);
+	destroy_Q(queue);//need to destroy the queue after completion of each algorithm
 
 	return algorithm_summary;
 }
 
-void algorithm_results(FILE *output_file, PROC_INFO *proc, int num_of_procs, SUMMARY **algorithm_summaries, int algorithm){
+void algorithm_results(FILE *output_file, PROC_INFO *proc, int num_of_procs, SUMMARY **algorithm_summaries, int algorithm){//print algorithm result based on the value of algorithm
 
 	int i = 0;
 
@@ -531,16 +529,16 @@ void algorithm_results(FILE *output_file, PROC_INFO *proc, int num_of_procs, SUM
 	fprintf(output_file, "Context Switches: %d\n\n\n", algorithm_summaries[algorithm] -> context_switches);
 }
 
-void print_simulation_results(FILE *output_file, SUMMARY **algorithm_summaries){
+void print_simulation_results(FILE *output_file, SUMMARY **algorithm_summaries){//print the overall simulation results
 
-	int wait_t[5] = {0,1,2,3,4};
+	int wait_t[5] = {0,1,2,3,4};//corresponding process ids
 	int turnaround_t[5] = {0,1,2,3,4};
 	int context_switch[5] = {0,1,2,3,4};
 	int holder;
-	int i;
+	int i,j;
 	
-	for(i = 0; i < 4; i++){
-		for(int j = 0; j < 4; j++){
+	for(i = 0; i < 4; i++){//bubble sort to sort the average wt, tt, and cs
+		for(j = 0; j < 4; j++){
 			if(algorithm_summaries[wait_t[j]] -> avg_wt > algorithm_summaries[wait_t[j+1]] -> avg_wt){
 				holder = wait_t[j];
 				wait_t[j] = wait_t[j+1];
@@ -577,7 +575,7 @@ void print_simulation_results(FILE *output_file, SUMMARY **algorithm_summaries){
 
 	fprintf(output_file,"\nTurnaround Time Comparison\n");
 
-	for(i = 0; i < 4; i++){
+	for(i = 0; i < 5; i++){
 		if(turnaround_t[i] == 0)
 			fprintf(output_file, "FCFS\t\t%4.2f\n", algorithm_summaries[0] -> avg_tt);
 		if(turnaround_t[i] == 1)
@@ -589,7 +587,10 @@ void print_simulation_results(FILE *output_file, SUMMARY **algorithm_summaries){
 		if(turnaround_t[i] == 4)
 			fprintf(output_file, "NPP\t\t%4.2f\n", algorithm_summaries[4] -> avg_tt);
 	}
-	for(i = 0; i < 4; i++){
+
+	fprintf(output_file, "\nContext Switch Comparison\n");
+
+	for(i = 0; i < 5; i++){
 		if(context_switch[i] == 0)
 			fprintf(output_file, "FCFS\t\t%d\n", algorithm_summaries[0] -> context_switches);
 		if(context_switch[i] == 1)
