@@ -1,67 +1,84 @@
-#ifndef SCHED_SIM_H_
-#define SCHED_SIM_H_
+#ifndef SCHED_SIM_H
+#define SCHED_SIM_H
 
-int num_of_procs;
-int *arr;
-int update_interval;
-
-FILE *input_file;
-FILE *output_file;
+extern const int QUANTUM;
 
 typedef struct proc_info{
-	int cpu_burst;
-	int remaining_burst;
+
+	int id;
+	int burst_t;
 	int priority;
-	int arrival_time;
-	int turnaround_time;
-	int wait_time;	
-	int ID;
-	char status; //New, Primed, Waiting, Running, Completed (N,P,W,R,C)
+	int arrival_t;
 	int start_t;
-	int last_t;
 	int end_t;
+	int last_run;
 	int remaining_t;
-} PROC_INFO;
+	int tt;//turnaround time
+	int wt;//wait time
+	char status;//New, Ready, Active, Waiting, Completed (N,R,A,W,C)
+}PROC_INFO;
 
-PROC_INFO *proc_array;
+//Linked list structs
+typedef struct ll_node{
 
-typedef struct proc_queue{
-	queue_node *head;
-	queue_node *tail;
+	int proc_id;
+	struct ll_node *next;
+}LL_NODE;
+
+typedef struct ll{
+
+	LL_NODE *head;
+	LL_NODE *tail;
+}LL;
+
+//Queue structs
+typedef struct node{
+
+	PROC_INFO *info;
+	struct node *next;
+}NODE;
+
+typedef struct queue{
+
+	NODE *head;
+	NODE *tail;
 }QUEUE;
 
-QUEUE *queue;
+//Algorithm summary struct
+typedef struct summary{
 
-typedef struct queue_node{
-	PROC_INFO *info;
-	queue_node *next;
-}QUEUE_NODE;
-
-typedef struct llist_node{
-	int data;
-	llist_node *next;
-}LLIST_NODE;
-
-typedef struct llist{
-	LLIST_NODE *head;
-	LLIST_NODE *tail;
-}LLIST;
-
-LLIST *ll;
-
-typedef struct summarry{
 	double avg_wt;
 	double avg_tt;
-	LLIST *proc_seq;
 	int context_switches;
+	LL *proc_seq;
 }SUMMARY;
 
-SUMMARY *summary;
+QUEUE* create_Q();
+LL* create_LL();
+SUMMARY* create_SUMMARY();
 
-void fcfs(int update_interval);
-void enqueue(PROC_INFO *proc_array);
-int dequeue();
-void print_queue();
-void initialize();
+void destroy_Q(QUEUE *queue);
+void destroy_LL(LL *linked_l);
+void destroy_SUMMARY(SUMMARY *algo_summary);
+
+void enQ(QUEUE *queue, PROC_INFO *proc);
+void burst_enQ(QUEUE *queue, PROC_INFO *proc);
+void remainingBURST_enQ(QUEUE *queue, PROC_INFO *proc);
+void priority_enQ(QUEUE *queue, PROC_INFO *proc);
+int deQ(QUEUE *queue);
+int checkQ(QUEUE *queue);
+int Qempty(QUEUE *queue);
+void printQ(FILE *output_file, QUEUE *queue);
+
+void add_LLnode(LL *linked_l, int id);
+void printLL(FILE *output_file, LL *linked_l);
+int LLempty(LL *linked_l);
+
+SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int num_of_procs, int algorithm);//0,1,2,3,4 (FCFS,SJF,STCF,RR,NPP)
+
+void algorithm_results(FILE *output_file, PROC_INFO *proc,int num_of_procs,SUMMARY **algo_summaries, int algorithm);
+void print_simulation_results(FILE *output_file, SUMMARY **algo_summaries);
 
 #endif
+
+

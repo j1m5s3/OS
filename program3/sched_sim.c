@@ -2,191 +2,616 @@
 #include <stdlib.h>
 #include "sched_sim.h"
 
-void initialize(){
-	queue = (QUEUE *)malloc(sizeof(QUEUE));
+QUEUE* create_Q(){
+
+	QUEUE *queue = (QUEUE *)malloc(sizeof(QUEUE));
+
 	queue -> head = NULL;
 	queue -> tail = NULL;
 
-	ll = (LLIST *)malloc(sizeof(LLIST));
-	ll -> head = NULL;
-	ll -> tail = NULL;	
-
-	summary = (SUMMARY *)malloc(sizeof(SUMMARY));
-	summary -> avg_wt = 0;
-	summary -> avg_tt = 0;
-	summary -> proc_seq = ll;
-	summary -> context_switches = 0;
-
-	proc_array = (PROC_INFO *)malloc(num_of_procs*sizeof(PROC_INFO));
-	arr = (int *)malloc(num_of_procs*3*sizeof(int));
+	return queue;
 }
 
-void fcfs(int update_interval){
-	int t = 0;
-	int burst;
-	int arrival_check = 0;
-	int completed = 0;
-	int curr_proc = -1;
-	QUEUE_NODE current;
+LL* create_LL(){
 
-	fprintf(output_file, "**** FCFS ****\n");
+	LL *linked_l = (LL *)malloc(sizeof(LL));
 
-	while(completed < num_of_procs){//loop for processes
-		while(arrival_check < num_of_procs){
-			if(proc_array[arrival_check].arrival_time == t && proc_array[arrival_check].status =='N'){
-				enqueue(proc_array[arrival_check]);
-				proc_array[arrival_check].status = 'P';//Proc is primed and on the queue
-			}
+	linked_l -> head = NULL;
+	linked_l -> tail = NULL;
+
+	return linked_l;
+}
+
+SUMMARY* create_SUMMARY(){
+
+	SUMMARY *algo_summary = (SUMMARY *)malloc(sizeof(SUMMARY));
+
+	algo_summary -> avg_wt = 0;
+	algo_summary -> avg_tt = 0;
+	algo_summary -> proc_seq = create_LL();
+	algo_summary -> context_switches = 0;
+
+	return algo_summary;
+}
+
+void destroy_Q(QUEUE* queue){
+
+	NODE *current = queue -> head;
+
+	while(current != NULL){
+
+		current = queue -> head -> next;
+		free(queue -> head);
+		queue -> head = current;
+	}
+
+	free(queue);
+	queue = NULL;
+}
+
+void destroy_LL(LL *linked_l){
+
+	LL_NODE *current = linked_l -> head;
+
+	while(current != NULL){
+
+		current = linked_l -> head -> next;
+		free(linked_l -> head);
+		linked_l -> head = current;
+	}
+
+	free(linked_l);
+	linked_l = NULL;
+}
+
+void destroy_SUMMARY(SUMMARY *algorithm_summary){
+
+	destroy_LL(algorithm_summary -> proc_seq);
+	free(algorithm_summary);
+	algorithm_summary = NULL;
+}
+
+void enQ(QUEUE *queue, PROC_INFO *proc){
+	printf("ENQ: %d\n",__LINE__);
+
+	NODE *NEWnode = (NODE *)malloc(sizeof(NODE));
+	printf("ENQ: %d\n", __LINE__);
+	NEWnode -> info = proc;
+	NEWnode -> next = NULL;
+
+	if(Qempty(queue)){
+		
+		queue -> head = NEWnode;
+		queue -> tail = NEWnode;
+	}
+	else{
+		queue -> tail -> next = NEWnode;
+		queue -> tail = NEWnode;
+	}
+}
+
+void burst_enQ(QUEUE *queue, PROC_INFO *proc){//enqueue process depending on burst
+
+	NODE *CURRENTnode;
+	NODE *NEWnode = (NODE *)malloc(sizeof(NODE));
+
+	NEWnode -> info = proc;
+	NEWnode -> next = NULL;
+
+	if(Qempty(queue)){
+
+		queue -> head = NEWnode;
+		queue -> tail = NEWnode;
+		return;
+	}
+
+	CURRENTnode = queue -> head;
+
+	if(queue -> head -> info -> burst_t > proc -> burst_t){
+
+		NEWnode -> next = queue -> head;
+		queue -> head = NEWnode;
+	}
+	else{
+		while(CURRENTnode -> next != NULL && CURRENTnode -> next -> info -> burst_t < proc -> burst_t){
+
+			CURRENTnode = CURRENTnode -> next;
+		}
+
+		if(queue -> tail == CURRENTnode){
+			queue -> tail = NEWnode;
+		}
+
+		NEWnode -> next = CURRENTnode -> next;
+		CURRENTnode -> next = NEWnode;
+	}
+}
+
+void remainingBURST_enQ(QUEUE *queue, PROC_INFO *proc){
+
+	NODE *CURRENTnode;
+	NODE *NEWnode = (NODE *)malloc(sizeof(NODE));
+
+	NEWnode -> info = proc;
+	NEWnode -> next = NULL;
+
+	if(Qempty(queue)){
+
+		queue -> head = NEWnode;
+		queue -> tail = NEWnode;
+		return;
+	}
+
+	CURRENTnode = queue -> head;
+
+	if(queue -> head -> info -> remaining_t > proc -> remaining_t){
+
+		NEWnode -> next = queue -> head;
+		queue -> head = NEWnode;
+	}
+	else{
+		while(CURRENTnode -> next != NULL && CURRENTnode -> next -> info -> remaining_t < proc -> remaining_t){
+
+			CURRENTnode = CURRENTnode -> next;
+		}
+
+		if(queue -> tail == CURRENTnode){
+			queue -> tail = NEWnode;
+		}
+
+		NEWnode -> next = CURRENTnode -> next;
+		CURRENTnode -> next = NEWnode;
+	}
+}
+
+void priority_enQ(QUEUE *queue, PROC_INFO *proc){
+
+	NODE *CURRENTnode;
+	NODE *NEWnode = (NODE *)malloc(sizeof(NODE));
+
+	NEWnode -> info = proc;
+	NEWnode -> next = NULL;
+
+	if(Qempty(queue)){
+
+		queue -> head = NEWnode;
+		queue -> tail = NEWnode;
+		return;
+	}
+
+	CURRENTnode = queue -> head;
+
+	if(queue -> head -> info -> priority > proc -> priority){
+		
+		NEWnode -> next = queue -> head;
+		queue -> head = NEWnode;
+	}
+	else{
+		while(CURRENTnode -> next != NULL && CURRENTnode -> next -> info -> priority < proc -> priority){
 			
-			arrival_check++;
+			CURRENTnode = CURRENTnode -> next;
 		}
 
-		arrival_check = 0;
-
-	
-		if(queue -> head != queue -> tail && curr_proc == -1){//Loading first process
-			if(t % update_interval == 0){
-				fprintf(output_file, "t = %d\n", t);
-				fprintf(output_file, "CPU: Loading process %d ", queue -> head -> info -> ID);
-				fprintf(output_file, "(CPU burst = %d)\n", queue -> head -> info -> cpu_burst);
-
-				print_queue();
-
-				fprintf(output_file, "\n");
-			}
-
-			curr_proc = dequeue();
-			proc_array[curr_proc].status = 'R';
-			proc_array[curr_proc].start_t = t;
-			proc_array[curr_proc].last_t = t;
-			proc_array[curr_proc].remaining_t--;
-			summary -> context_switches++;
-			ll_add(curr_proc);
+		if(queue -> tail == CURRENTnode){
+			queue -> tail = NEWnode;
 		}
-		else if(proc_array[curr_proc].remaining_t == 0 && queue -> head != queue -> tail){
+
+		if(queue -> tail == CURRENTnode){
+			queue -> tail = NEWnode;
+		}
+
+		NEWnode -> next = CURRENTnode -> next;
+		CURRENTnode -> next = NEWnode;
+	}
+}
+
+int deQ(QUEUE *queue){
+
+	int id;
+	NODE *TEMPnode;
+
+	printf("deQ: %d\n",__LINE__);
+	if(Qempty(queue)){
+		return -1;
+	}
+	printf("deQ: %d\n",__LINE__);
+	TEMPnode = queue -> head;
+	id = TEMPnode -> info -> id;
+	printf("deQ: %d\n",__LINE__);
+
+	queue -> head = queue -> head -> next;
+
+	free(TEMPnode);
+	printf("deQ: %d\n",__LINE__);
+
+	return id;
+}
+
+int checkQ(QUEUE *queue){
+	return queue -> head -> info -> id;
+}
+
+int Qempty(QUEUE *queue){
+	printf("Qempty: %d\n", __LINE__);
+	return queue -> head == NULL && queue -> tail == NULL;
+}
+
+void printQ(FILE *output_file, QUEUE *queue){
+	printf("printQ: %d\n",__LINE__);
+
+	NODE *CURRENTnode;
+
+	if(Qempty(queue)){
+		fprintf(output_file, "EMPTY\n");
+		return;
+	}
+
+	CURRENTnode = queue -> head;
+	printf("printQ: %d\n",__LINE__);
+
+	CURRENTnode -> next = queue -> head -> next;
+	printf("printQ: %d\n",__LINE__);
+
+	while(CURRENTnode -> next != NULL){
+		printf("printQ: %d\n",__LINE__);
+
+		fprintf(output_file, "%d-", CURRENTnode -> info -> id);
+		CURRENTnode -> info = CURRENTnode -> next -> info;
+		CURRENTnode -> next = CURRENTnode -> next -> next;
+	}
+	fprintf(output_file, "%d\n", queue -> tail -> info -> id);
+}
+
+void add_LLnode(LL *linked_l, int id){
+
+	LL_NODE *NEWnode = (LL_NODE *)malloc(sizeof(LL_NODE));
+
+	NEWnode -> proc_id = id;
+	NEWnode -> next = NULL;
+
+	if(LLempty(linked_l)){
+		
+		linked_l -> head = NEWnode;
+		linked_l -> tail = NEWnode;
+	}
+	else{
+		linked_l -> tail -> next = NEWnode;
+		linked_l -> tail = NEWnode;
+	}
+}
+
+void printLL(FILE *output_file,LL *linked_l){
+
+	LL_NODE *CURRENTnode;
+
+	if(LLempty(linked_l)){
+
+		fprintf(output_file, "EMPTY\n");
+		return;
+	}
+
+	CURRENTnode -> proc_id = linked_l -> head -> proc_id;
+	CURRENTnode -> next = linked_l -> head -> next;
+
+	while(CURRENTnode -> next != NULL){
+		
+		fprintf(output_file, "%d-", CURRENTnode -> proc_id);
+		CURRENTnode -> proc_id = CURRENTnode -> next -> proc_id;
+		CURRENTnode -> next = CURRENTnode -> next -> next;
+	}
+	fprintf(output_file, "%d\n", linked_l -> tail -> proc_id);
+}
+
+int LLempty(LL *linked_l){
+	return linked_l -> head == NULL && linked_l -> tail == NULL;
+}
+
+SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int num_of_procs, int algorithm){
+
+	int i;
+	int t = 0;
+	int complete = 0;
+	int curr_proc = -1;
+	printf("SIM: %d\n",__LINE__);
+	SUMMARY *algorithm_summary = create_SUMMARY();
+	QUEUE *queue = create_Q();
+	printf("SIM: %d\n",__LINE__);
+	if(algorithm == 0)
+		fprintf(output_file, "***** FCFS Scheduling *****\n");
+	if(algorithm == 1)
+		fprintf(output_file, "***** SJF Scheduling *****\n");
+	if(algorithm == 2)
+		fprintf(output_file, "***** STCF Scheduling *****\n");
+	if(algorithm == 3)
+		fprintf(output_file, "***** STCF Scheduling *****\n");
+	if(algorithm == 4)
+		fprintf(output_file, "***** STCF Scheduling *****\n");
+	printf("SIM: %d\n",__LINE__);
+
+	while(complete < num_of_procs){
+		for(i = 0; i < num_of_procs; i++){
+			if(t >= proc[i].arrival_t){
+				if(proc[i].status == 'N' || proc[i].status == 'W'){
+					if(algorithm == 0){//FCFS
+						enQ(queue, &proc[i]);
+						printf("SCHED: %d\n",__LINE__);
+						proc[i].status = 'R';
+					}
+					if(algorithm == 1){//SJF
+						burst_enQ(queue, &proc[i]);
+						printf("SCHED: %d\n",__LINE__);
+						proc[i].status = 'R';
+					}
+					if(algorithm == 2){//STCF
+						remainingBURST_enQ(queue, &proc[i]);
+					  	printf("SCHED: %d\n",__LINE__);
+						proc[i].status = 'R';
+					}
+					if(algorithm == 3){//RR
+						enQ(queue, &proc[i]);
+						printf("SCHED: %d\n",__LINE__);
+						proc[i].status = 'R';
+					}
+					if(algorithm == 4){//NPP
+						priority_enQ(queue, &proc[i]);
+						printf("SCHED: %d\n",__LINE__);
+						proc[i].status = 'R';
+					}
+				}
+			}
+		}
+		if(curr_proc == -1 && !Qempty(queue)){
 			if(t % update_interval == 0){
 				fprintf(output_file, "t = %d\n", t);
-				fprintf(output_file, "CPU: Finishing Process %d; ", curr_proc);
-				fprintf(output_file, "Loading Process %d ", queue -> head -> info -> ID);
-				fprintf(output_file, "(CPU Burst = %d)\n" queue -> head -> info -> cpu_burst);
+				fprintf(output_file, "CPU: Loading Process %d ", checkQ(queue));
+				fprintf(output_file, "(CPU BURST = %d)\n", proc[checkQ(queue)].burst_t);
+				fprintf(output_file, "Ready Queue: ");
+				printQ(output_file, queue);
+				fprintf(output_file,"\n");
+			}
+			printf("SIM: %d\n",__LINE__);
 
-				print_queue();
+			curr_proc = deQ(queue);
+			proc[curr_proc].status = 'A';//First process is active
+			proc[curr_proc].start_t = t;
+			proc[curr_proc].last_run = t;
+			proc[curr_proc].remaining_t--;
+			algorithm_summary -> context_switches++;
+			add_LLnode(algorithm_summary -> proc_seq, curr_proc);
+			printf("SIM: %d\n",__LINE__);
 
+		}
+		else if(curr_proc == -1 && Qempty(queue)){
+			if(t % update_interval == 0){
+				fprintf(output_file,"t = %d\n", t);
+				fprintf(output_file, "CPU: Waiting for processes\n");
+				fprintf(output_file, "Ready Queue: ");
+				printQ(output_file, queue);
 				fprintf(output_file, "\n");
 			}
+		}
+		else if(proc[curr_proc].remaining_t <= 0 && !Qempty(queue)){
+			if(t % update_interval == 0){	
+				fprintf(output_file, "t = %d\n", t);
+				fprintf(output_file, "CPU: Finishing Process %d; Loading Process %d ", curr_proc, checkQ(queue));
+				fprintf(output_file, "(CPU BURST = %d)\n", proc[checkQ(queue)].remaining_t);
+				fprintf(output_file, "Ready Queue: ");
+				printQ(output_file, queue);
+				fprintf(output_file,"\n");
+			}
+			printf("SIM: %d\n",__LINE__);
 
-			proc_array[curr_proc].status = 'C';
-			proc_array[curr_proc].end_t = t;
+			proc[curr_proc].status = 'C';
+			proc[curr_proc].end_t = t;
 			complete++;
-			curr_proc = dequeue();
-			proc_array[curr_proc].status = 'R';
-			proc_array[curr_proc].start_t = t;
-			proc_array[curr_proc].last_t = t;
-			proc_array[curr_proc].remaining_t--;
-			summary -> context_switches++;
-			ll_add(curr_proc);
+			curr_proc = deQ(queue);
+			proc[curr_proc].status = 'A';
+
+			if(proc[curr_proc].remaining_t == proc[curr_proc].burst_t){
+				proc[curr_proc].start_t = t;
+			}
+			proc[curr_proc].last_run = t;
+			proc[curr_proc].remaining_t--;
+			algorithm_summary -> context_switches++;
+			add_LLnode(algorithm_summary -> proc_seq, curr_proc);
+			printf("SIM: %d\n",__LINE__);
+
 		}
-		else if(proc_array[curr_proc].reamaining_t == 0 && queue -> head == queue -> tail){
+		else if(proc[curr_proc].remaining_t <= 0 && Qempty(queue)){
 			if(t % update_interval == 0){
 				fprintf(output_file, "t = %d\n", t);
-				fprintf(output_file, "CPU: Finishing Process %d\n", curr_proc);
-
-				print_queue();
-
+				fprintf(output_file, "CPU: Finishing Process %d \n", curr_proc);
+				fprintf(output_file, "Ready Queue: ");
+				printQ(output_file, queue);
 				fprintf(output_file, "\n");
 			}
-
-			proc_array[curr_proc].status = 'C';
-			proc_array[curr_proc].end_t = t;
+			proc[curr_proc].status = 'C';
+			proc[curr_proc].end_t = t;
 			complete++;
+			curr_proc = -1;
 		}
-		else{ 
+		else if(algorithm == 2 && !Qempty(queue) && proc[curr_proc].remaining_t > proc[checkQ(queue)].remaining_t){
 			if(t % update_interval == 0){
 				fprintf(output_file, "t = %d\n", t);
-				fprintf(output_file, "CPU: Running process %d ", curr_proc);
-				fprintf(output_file, "(Remaining CPU Burst = %d)\n", proc_array[curr_proc].remaining_t);
-
-				print_queue();
-
+				fprintf(output_file, "CPU: Preempting Process %d (Remaining CPU BURST = %d; ", curr_proc, proc[curr_proc].remaining_t);
+				fprintf(output_file, "Loading Process %d (CPU BURST = %d)\n", checkQ(queue), proc[checkQ(queue)].remaining_t);
+				fprintf(output_file, "Ready Queue: ");
+				printQ(output_file, queue);
 				fprintf(output_file, "\n");
 			}
+			proc[curr_proc].status = 'W';
+			curr_proc = deQ(queue);
+			proc[curr_proc].status = 'A';
 
-			proc_array[curr_proc].remaining_t--;
+			if(proc[curr_proc].remaining_t == proc[curr_proc].burst_t){
+				proc[curr_proc].start_t = t;
+			}
+
+			proc[curr_proc].last_run = t;
+			proc[curr_proc].remaining_t--;
+			algorithm_summary -> context_switches++;
+			add_LLnode(algorithm_summary -> proc_seq, curr_proc);
+		}
+		else if(algorithm == 3 && !Qempty(queue) && t - proc[curr_proc].last_run >= QUANTUM){
+			if(t % update_interval == 0){
+				fprintf(output_file, "t = %d\n", t);
+				fprintf(output_file, "CPU: Preempting Process %d (Remaining CPU BURST = %d); ", curr_proc, proc[curr_proc].remaining_t);
+				fprintf(output_file, "Loading Process %d (CPU BURST = %d)\n", checkQ(queue), proc[checkQ(queue)].remaining_t);
+				fprintf(output_file, "Ready Queue: ");
+				printQ(output_file, queue);
+				fprintf(output_file, "\n");
+			}
+			proc[curr_proc].status = 'W';
+			curr_proc = deQ(queue);
+			proc[curr_proc].status = 'A';
+
+			if(proc[curr_proc].remaining_t == proc[curr_proc].burst_t){
+				proc[curr_proc].start_t = t;
+			}
+
+			proc[curr_proc].last_run = t;
+			proc[curr_proc].remaining_t--;
+			algorithm_summary -> context_switches++;
+			add_LLnode(algorithm_summary -> proc_seq, curr_proc);
+		}
+		else{
+			if(t % update_interval == 0){
+				fprintf(output_file, "t = %d\n", t);
+				fprintf(output_file, "CPU: Running Process %d ", curr_proc);
+				fprintf(output_file, "(Remaining CPU BURST = %d)\n", proc[curr_proc].remaining_t);
+				fprintf(output_file, "Ready queue: ");
+				printQ(output_file, queue);
+				fprintf(output_file,"\n");
+			}
+			proc[curr_proc].remaining_t--;
 		}
 
 		t++;
 	}
+
+	for(i = 0; i < num_of_procs; i++){
+		proc[i].tt = proc[i].end_t - proc[i].arrival_t;
+		proc[i].wt = proc[i].tt - proc[i].burst_t;
+		algorithm_summary -> avg_tt += proc[i].tt;
+		algorithm_summary -> avg_wt += proc[i].wt;
+	}
+	algorithm_summary -> avg_tt/= num_of_procs;
+	algorithm_summary -> avg_wt /= num_of_procs;
+
+	destroy_Q(queue);
+
+	return algorithm_summary;
 }
 
-void print_queue(){
-	QUEUE_NODE current;
+void algorithm_results(FILE *output_file, PROC_INFO *proc, int num_of_procs, SUMMARY **algorithm_summaries, int algorithm){
 
-	current.info = head -> info;
-	current.info = head -> next;
+	int i = 0;
 
-	fprintf(output_file, "Ready queue: ");
+	fprintf(output_file, "\n********************************************************\n");
 
-	if(queue -> head == queue -> tail){
-		fprintf(output_file,"EMPTY\n");
-	}
+	if(algorithm == 0)
+		fprintf(output_file, "FCFS Summary(WT = Wait Time, TT = Turnaround Time)\n\n");
+	if(algorithm == 1)
+		fprintf(output_file, "SJF Summary(WT = Wait Time, TT = Turnaround Time)\n\n");
+	if(algorithm == 2)
+		fprintf(output_file, "STCF Summary(WT = Wait Time, TT = Turnaround Time)\n\n");
+	if(algorithm == 3)
+		fprintf(output_file, "RR Summary(WT = Wait Time, TT = Turnaround Time)\n\n");
+	if(algorithm == 4)
+		fprintf(output_file, "NPP Summary(WT = Wait Time, TT = Turnaround Time)\n\n");
 
-	while(current.next != NULL){
-		fprintf(output_file "%d-", current.info -> ID);
-		current.info = current.next -> info;
-		current.next = current.next -> next;
-	}
-
-	fprintf(output_file, "%d\n", queue -> tail -> info -> ID);
-}
-
-void enqueue(PROC_INFO *proc_array){
-	 QUEUE_NODE *NEWnode = (QUEUE_NODE *)malloc(sizeof(QUEUE_NODE));
-	 NEWnode -> info = proc_array;
-	 NEWnode -> next = NULL;
-
-	 if(queue -> tail == NULL){//
-		 queue -> head = queue -> tail = NEWnode;
-	 }
-	 else
-	 {
-		 queue -> tail -> next = NEWnode;
-		 queue -> tail = NEWnode;
-	 }
-}
-
-int dequeue(){//dequeue a process when it is executing, becomes ACTIVE procecss
-	int ID;
-	QUEUE_NODE *temp;
-
-	if(queue -> head == NULL){
-		return -1;
-	}
-
-	temp = queue -> head;
-	ID = temp -> info -> ID;
-	queue -> head = queue -> head -> next;
-
-	free(temp);
-
-	if(queue -> head == NULL){
-		queue -> tail = NULL;
-	}
-
-	return ID;
-}
-
-void ll_add(int ID){
-	LLIST_NODE *NEWnode = (LLIST_NODE *)malloc(sizeof(LLIST_NODE));
-	NEWnode -> data = ID;
-	NEWnode -> next = NULL;
+	fprintf(output_file, "PID\tWT\tTT\n");
 	
-	if(ll -> head = NULL && ll -> tail = NULL){
-		ll -> head = NEWnode;
-		ll -> tail = NEWnode
+	while(i < num_of_procs){
+		fprintf(output_file, "%d\t%d\t%d\n", i, proc[i].wt, proc[i].tt);
+		i++;
 	}
-	else 
-	{
-		ll -> tail -> next = NEWnode;
-		ll -> tail = NEWnode;
+
+	fprintf(output_file, "AVG\t%4.2f\t%4.2f\n\n", algorithm_summaries[algorithm] -> avg_wt, algorithm_summaries[algorithm] -> avg_tt);
+	fprintf(output_file, "Process Sequence: ");
+	printLL(output_file, algorithm_summaries[algorithm] -> proc_seq);
+	fprintf(output_file, "Context Switches: %d\n\n\n", algorithm_summaries[algorithm] -> context_switches);
+}
+
+void print_simulation_results(FILE *output_file, SUMMARY **algorithm_summaries){
+
+	int wait_t[5] = {0,1,2,3,4};
+	int turnaround_t[5] = {0,1,2,3,4};
+	int context_switch[5] = {0,1,2,3,4};
+	int holder;
+	int i;
+	
+	for(i = 0; i < 4; i++){
+		for(int j = 0; j < 4; j++){
+			if(algorithm_summaries[wait_t[j]] -> avg_wt > algorithm_summaries[wait_t[j+1]] -> avg_wt){
+				holder = wait_t[j];
+				wait_t[j] = wait_t[j+1];
+				wait_t[j+1] = holder;
+			}
+			if(algorithm_summaries[turnaround_t[j]] -> avg_tt > algorithm_summaries[turnaround_t[j+1]] -> avg_tt){
+				holder = turnaround_t[j];
+				turnaround_t[j] = turnaround_t[j+1];
+				turnaround_t[j+1] = holder;
+			}
+			if(algorithm_summaries[context_switch[j]] -> context_switches > algorithm_summaries[context_switch[j+1]] -> context_switches){
+				holder = context_switch[j];
+				context_switch[j] = context_switch[j+1];
+				context_switch[j+1] = holder;
+			}
+		}
+	}
+
+	fprintf(output_file, "***** OVERALL SUMMARY *****\n\n");
+	fprintf(output_file, "Wait Time COmparison\n");
+
+	for(i = 0; i < 4; i++){
+		if(wait_t[i] == 0)
+			fprintf(output_file, "FCFS\t\t%4.2f\n", algorithm_summaries[0] -> avg_wt);
+		if(wait_t[i] == 1)
+			fprintf(output_file, "SJF\t\t%4.2f\n", algorithm_summaries[1] -> avg_wt);
+		if(wait_t[i] == 2)
+			fprintf(output_file, "STCF\t\t%4.2f\n", algorithm_summaries[2] -> avg_wt);
+		if(wait_t[i] == 3)
+			fprintf(output_file, "RR\t\t%4.2f\n", algorithm_summaries[3] -> avg_wt);
+		if(wait_t[i] == 4)
+			fprintf(output_file, "NPP\t\t%4.2f\n", algorithm_summaries[4] -> avg_wt);
+	}
+
+	fprintf(output_file,"\nTurnaround Time Comparison\n");
+
+	for(i = 0; i < 4; i++){
+		if(turnaround_t[i] == 0)
+			fprintf(output_file, "FCFS\t\t%4.2f\n", algorithm_summaries[0] -> avg_tt);
+		if(turnaround_t[i] == 1)
+			fprintf(output_file, "SJF\t\t%4.2f\n", algorithm_summaries[1] -> avg_tt);
+		if(turnaround_t[i] == 2)
+			fprintf(output_file, "STCF\t\t%4.2f\n", algorithm_summaries[2] -> avg_tt);
+		if(turnaround_t[i] == 3)
+			fprintf(output_file, "RR\t\t%4.2f\n", algorithm_summaries[3] -> avg_tt);
+		if(turnaround_t[i] == 4)
+			fprintf(output_file, "NPP\t\t%4.2f\n", algorithm_summaries[4] -> avg_tt);
+	}
+	for(i = 0; i < 4; i++){
+		if(context_switch[i] == 0)
+			fprintf(output_file, "FCFS\t\t%d\n", algorithm_summaries[0] -> context_switches);
+		if(context_switch[i] == 1)
+			fprintf(output_file, "SJF\t\t%d\n", algorithm_summaries[1] -> context_switches);
+		if(context_switch[i] == 2)
+			fprintf(output_file, "STCF\t\t%d\n", algorithm_summaries[2] -> context_switches);
+		if(context_switch[i] == 3)
+			fprintf(output_file, "RR\t\t%d\n", algorithm_summaries[3] -> context_switches);
+		if(context_switch[i] == 4)
+			fprintf(output_file, "NPP\t\t%d\n", algorithm_summaries[4] -> context_switches);
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
