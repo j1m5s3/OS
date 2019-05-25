@@ -239,25 +239,25 @@ int Qempty(QUEUE *queue){
 void printQ(FILE *output_file, QUEUE *queue){
 	printf("printQ: %d\n",__LINE__);
 
-	NODE *CURRENTnode;
+	NODE CURRENTnode;
 
 	if(Qempty(queue)){
 		fprintf(output_file, "EMPTY\n");
 		return;
 	}
 
-	CURRENTnode = queue -> head;
+	CURRENTnode.info = queue -> head -> info;
 	printf("printQ: %d\n",__LINE__);
 
-	CURRENTnode -> next = queue -> head -> next;
+	CURRENTnode.next = queue -> head -> next;
 	printf("printQ: %d\n",__LINE__);
 
-	while(CURRENTnode -> next != NULL){
+	while(CURRENTnode.next != NULL){
 		printf("printQ: %d\n",__LINE__);
 
-		fprintf(output_file, "%d-", CURRENTnode -> info -> id);
-		CURRENTnode -> info = CURRENTnode -> next -> info;
-		CURRENTnode -> next = CURRENTnode -> next -> next;
+		fprintf(output_file, "%d-", CURRENTnode.info -> id);
+		CURRENTnode.info = CURRENTnode.next -> info;
+		CURRENTnode.next = CURRENTnode.next -> next;
 	}
 	fprintf(output_file, "%d\n", queue -> tail -> info -> id);
 }
@@ -404,7 +404,8 @@ SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int
 			proc[curr_proc].status = 'C';
 			proc[curr_proc].end_t = t;
 			complete++;
-			curr_proc = deQ(queue);
+			curr_proc = deQ(queue);//segfault appears to heappen here
+			printf("SIM: %d\n", __LINE__);
 			proc[curr_proc].status = 'A';
 
 			if(proc[curr_proc].remaining_t == proc[curr_proc].burst_t){
@@ -476,6 +477,8 @@ SUMMARY* simulation(FILE *output_file, int update_interval, PROC_INFO *proc, int
 		}
 		else{
 			if(t % update_interval == 0){
+				if(queue -> head == NULL && queue -> tail != NULL)
+					queue -> head == queue -> tail;
 				fprintf(output_file, "t = %d\n", t);
 				fprintf(output_file, "CPU: Running Process %d ", curr_proc);
 				fprintf(output_file, "(Remaining CPU BURST = %d)\n", proc[curr_proc].remaining_t);

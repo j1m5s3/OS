@@ -22,7 +22,7 @@ int main(int argc, char* argv[]){
 	int burst = 0;
 	int priority_num = 1;
 	int arrival = 2;
-	printf("MAIN: %d\n",__LINE__);	
+
 	SUMMARY **algorithm_summaries = (SUMMARY **)malloc(sizeof(SUMMARY *)*5);
 	
 	input_file = fopen(argv[1], "r");
@@ -35,17 +35,15 @@ int main(int argc, char* argv[]){
 	else{
 		num_of_procs = 10;
 	}
-	printf("%d\n",num_of_procs);
-	printf("MAIN: %d\n", __LINE__);
 
 	temp_arr = (int *)malloc(num_of_procs*3*sizeof(int));
-	printf("MAIN: %d\n", __LINE__);
+
 	while(fscanf(input_file, "%d", &temp_arr[i]) == 1){
 		i++;
 	}
-	printf("MAIN: %d\n",__LINE__);
+	
 	proc = (PROC_INFO *)malloc(num_of_procs*sizeof(PROC_INFO));
-	printf("MAIN: %d\n",__LINE__);
+	
 	for(j = 0; j < num_of_procs; j++){
 
 		proc[j].burst_t = temp_arr[burst];
